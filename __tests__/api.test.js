@@ -32,3 +32,18 @@ describe("GET /api/topics", () => {
       });
   });
 });
+
+describe("GET /api/", () => {
+  test("GET:200 responds with description of api endpoints", () => {
+    return request(app)
+      .get("/api/")
+      .expect(200)
+      .then((res) => {
+        const parsedRes = JSON.parse(res.text);
+        const descriptionsObj = parsedRes.descriptions;
+        Object.keys(descriptionsObj).forEach((key) => {
+          expect(descriptionsObj[key]).toHaveProperty("description");
+        });
+      });
+  });
+});
