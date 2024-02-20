@@ -1,4 +1,10 @@
-const { selectTopics, selectDescriptions } = require("../models/models");
+const {
+  selectTopics,
+  selectDescriptions,
+  selectArticle,
+  selectAllArticles,
+  selectComments,
+} = require("../models/models");
 
 function getTopics(req, res, next) {
   const topics = req.body;
@@ -7,7 +13,6 @@ function getTopics(req, res, next) {
       res.status(200).send({ topics });
     })
     .catch((err) => {
-      console.log(err);
       next(err);
     });
 }
@@ -18,7 +23,41 @@ function getApi(req, res, next) {
       res.status(200).send({ descriptions });
     })
     .catch((err) => {
-      console.log(err);
+      next(err);
+    });
+}
+
+function getArticles(req, res, next) {
+  const article = req.body;
+  const id = req.params.id;
+  selectArticle(id)
+    .then((article) => {
+      res.status(200).send({ article });
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+function getAllArticles(req, res, next) {
+  const article = req.body;
+  const id = req.params.id;
+  selectAllArticles()
+    .then((article) => {
+      res.status(200).send({ article });
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
+function getComments(req, res, next) {
+  const article = req.body;
+  const id = req.params.id;
+  selectComments(id)
+    .then((article) => {
+      res.status(200).send({ article });
+    })
+    .catch((err) => {
       next(err);
     });
 }
@@ -26,4 +65,7 @@ function getApi(req, res, next) {
 module.exports = {
   getTopics,
   getApi,
+  getArticles,
+  getAllArticles,
+  getComments,
 };
