@@ -15,14 +15,14 @@ describe("GET /api/topics", () => {
       .get("/api/topics")
       .expect(200)
       .then((res) => {
-        const topicsObject = JSON.parse(res.text);
-        const topics = topicsObject.topics;
+        const topics = res.body.topics;
         topics.forEach((topic) => {
           expect(topic).toHaveProperty("slug");
           expect(topic).toHaveProperty("description");
         });
       });
   });
+
   test("GET:404 respond with not found for invalid path", () => {
     return request(app)
       .get("/api/fridge")
@@ -39,11 +39,85 @@ describe("GET /api/", () => {
       .get("/api/")
       .expect(200)
       .then((res) => {
-        const parsedRes = JSON.parse(res.text);
-        const descriptionsObj = parsedRes.descriptions;
+        const descriptionsObj = res.body.descriptions;
         Object.keys(descriptionsObj).forEach((key) => {
           expect(descriptionsObj[key]).toHaveProperty("description");
         });
+      });
+  });
+});
+
+describe("GET /api/articles/:article_id", () => {
+  test("GET:200 responds with article object", () => {
+    return request(app)
+      .get("/api/articles/2")
+      .expect(200)
+      .then((res) => {
+        const article = res.body.article;
+        expect(article).toHaveProperty("article_id");
+        expect(article).toHaveProperty("title");
+        expect(article).toHaveProperty("topic");
+        expect(article).toHaveProperty("author");
+        expect(article).toHaveProperty("body");
+        expect(article).toHaveProperty("created_at");
+        expect(article).toHaveProperty("votes");
+        expect(article).toHaveProperty("article_img_url");
+      });
+  });
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/articles/20")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("article does not exist");
+      });
+  });
+});
+
+describe("GET /api/articles", () => {
+  test("GET:200 gets all articles", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then((res) => {
+        expect(Array.isArray(res.body.article)).toBe(true);
+        console.log(res.body.article);
+        res.body.article.forEach((article) => {
+          expect(article).toHaveProperty("article_id");
+          expect(article).toHaveProperty("title");
+          expect(article).toHaveProperty("topic");
+          expect(article).toHaveProperty("author");
+          expect(article).toHaveProperty("created_at");
+          expect(article).toHaveProperty("votes");
+          expect(article).toHaveProperty("article_img_url");
+        });
+      });
+  });
+});
+
+describe("GET /api/articles/:article_id/comments", () => {
+  test("GET:200 gets comnments of a specific article", () => {
+    return request(app)
+      .get("/api/articles/2/comments")
+      .expect(200)
+      .then((res) => {
+        articles = [res.body.article];
+        articles.forEach((article) => {
+          expect(article).toHaveProperty("comment_id");
+          expect(article).toHaveProperty("votes");
+          expect(article).toHaveProperty("created_at");
+          expect(article).toHaveProperty("author");
+          expect(article).toHaveProperty("body");
+          expect(article).toHaveProperty("article_id");
+        });
+      });
+  });
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/articles/20/comments")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("article does not exist");
       });
   });
 });
