@@ -54,21 +54,25 @@ function selectAllArticles() {
   });
 }
 
-function selectComments(id) {
+function selectComments(articleId) {
   return new Promise((resolve, reject) => {
     db.query(
-      `SELECT article_id, votes, created_at, author, body FROM articles WHERE article_id = $1;`,
-      [id]
+      `SELECT body, votes, author, article_id, created_at FROM comments WHERE article_id = $1 ORDER BY created_at DESC;`,
+      [articleId]
     )
       .then((result) => {
         if (result.rows.length === 0) {
-          return Promise.reject({ status: 404, msg: "article does not exist" });
+          return Promise.reject({
+            status: 404,
+            msg: "article does not exist",
+          });
         }
-        const response = {
-          ...result.rows[0],
-          comment_id: 1,
-        };
-        resolve(response);
+
+        const commentsWithIds = result.rows.map((comment, index) => ({
+          ...comment,
+          comment_id: index + 1,
+        }));
+        resolve(commentsWithIds);
       })
       .catch((error) => {
         reject(error);

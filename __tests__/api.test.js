@@ -48,12 +48,13 @@ describe("GET /api/", () => {
 });
 
 describe("GET /api/articles/:article_id", () => {
-  test("GET:200 responds with article object", () => {
+  test("GET:200 responds with specific article", () => {
     return request(app)
       .get("/api/articles/2")
       .expect(200)
       .then((res) => {
         const article = res.body.article;
+        console.log(article);
         expect(article).toHaveProperty("article_id");
         expect(article).toHaveProperty("title");
         expect(article).toHaveProperty("topic");
@@ -96,22 +97,25 @@ describe("GET /api/articles", () => {
 });
 
 describe("GET /api/articles/:article_id/comments", () => {
-  test("GET:200 gets comnments of a specific article", () => {
+  test("GET:200 gets comments of a specific article", () => {
     return request(app)
-      .get("/api/articles/2/comments")
+      .get("/api/articles/1/comments")
       .expect(200)
       .then((res) => {
-        articles = [res.body.article];
-        articles.forEach((article) => {
-          expect(article).toHaveProperty("comment_id");
-          expect(article).toHaveProperty("votes");
-          expect(article).toHaveProperty("created_at");
-          expect(article).toHaveProperty("author");
-          expect(article).toHaveProperty("body");
-          expect(article).toHaveProperty("article_id");
+        const comments = res.body.article;
+        console.log(typeof comments);
+        comments.forEach((comment) => {
+          console.log(comment);
+          expect(comment).toHaveProperty("comment_id");
+          expect(comment).toHaveProperty("votes");
+          expect(comment).toHaveProperty("created_at");
+          expect(comment).toHaveProperty("author");
+          expect(comment).toHaveProperty("body");
+          expect(comment).toHaveProperty("article_id");
         });
       });
   });
+
   test("GET:404 respond with not found for invalid path", () => {
     return request(app)
       .get("/api/articles/20/comments")
