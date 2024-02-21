@@ -195,3 +195,50 @@ describe("POST /api/articles/:article_id/comments", () => {
       });
   });
 });
+
+describe("PATCH /api/articles/:article_id/", () => {
+  test("PATCH:200 updates an article's votes", () => {
+    return request(app)
+      .patch("/api/articles/2")
+      .send({ inc_votes: 1 })
+      .expect(200)
+      .then((res) => {
+        const article = res.body.article;
+        expect(article).toHaveProperty("article_id", 2);
+        expect(article).toHaveProperty("title");
+        expect(article).toHaveProperty("body");
+        expect(article).toHaveProperty("votes", 1);
+      });
+  });
+  test("PATCH:200 updates an article's votes", () => {
+    return request(app)
+      .patch("/api/articles/2")
+      .send({ inc_votes: -100 })
+      .expect(200)
+      .then((res) => {
+        const article = res.body.article;
+        expect(article).toHaveProperty("article_id", 2);
+        expect(article).toHaveProperty("title");
+        expect(article).toHaveProperty("body");
+        expect(article).toHaveProperty("votes", -100);
+      });
+  });
+  test("PATCH:404 responds with article not found for invalid article ID", () => {
+    return request(app)
+      .patch("/api/articles/999999")
+      .send({ inc_votes: 1 })
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
+  test("PATCH:400 responds with bad request for invalid request body", () => {
+    return request(app)
+      .patch("/api/articles/2")
+      .send({})
+      .expect(400)
+      .then((res) => {
+        expect(res.body.msg).toBe("bad request");
+      });
+  });
+});

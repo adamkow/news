@@ -8,6 +8,7 @@ const {
   getAllArticles,
   getComments,
   postComment,
+  patchArticle,
 } = require("./controllers/controller");
 
 app.use(express.json());
@@ -18,6 +19,7 @@ app.get("/api/articles", getAllArticles);
 app.get("/api/articles/:id", getArticles);
 app.get("/api/articles/:id/comments", getComments);
 app.post("/api/articles/:id/comments", postComment);
+app.patch("/api/articles/:id", patchArticle);
 
 app.all("/*", (req, res, next) => {
   res.status(404).send({ msg: "path not found" });
