@@ -5,6 +5,7 @@ const {
   selectAllArticles,
   selectComments,
   newComment,
+  updateVotes,
 } = require("../models/models");
 
 function getTopics(req, res, next) {
@@ -72,6 +73,16 @@ function postComment(req, res, next) {
     })
     .catch(next);
 }
+
+function patchArticle(req, res, next) {
+  const { id } = req.params;
+  const votes = req.body.inc_votes;
+  updateVotes(id, votes)
+    .then((article) => {
+      res.status(200).send({ article });
+    })
+    .catch(next);
+}
 module.exports = {
   getTopics,
   getApi,
@@ -79,4 +90,5 @@ module.exports = {
   getAllArticles,
   getComments,
   postComment,
+  patchArticle,
 };
