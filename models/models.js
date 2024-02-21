@@ -80,10 +80,83 @@ function selectComments(articleId) {
   });
 }
 
+function newComment(articleId, username, commentBody) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "SELECT username FROM users WHERE username = $1",
+      [username],
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else if (result.rows.length === 0) {
+          newUser(username)
+            .then(() => {
+              insertComment(articleId, username, commentBody)
+                .then(resolve)
+                .catch((error) => {
+                  reject(error);
+                });
+            })
+            .catch((error) => {
+              reject(error);
+            });
+        } else {
+          insertComment(articleId, username, commentBody)
+            .then(resolve)
+            .catch((error) => {
+              reject(error);
+            });
+        }
+      }
+    );
+  });
+}
+function insertComment(articleId, username, commentBody) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "INSERT INTO comments (article_id, author, body) VALUES ($1, $2, $3) RETURNING *",
+      [articleId, username, commentBody],
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          db.query(
+            "SELECT * FROM comments WHERE article_id = $1",
+            [articleId],
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result.rows);
+              }
+            }
+          );
+        }
+      }
+    );
+  });
+}
+function newUser(username) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "INSERT INTO users (username, name) VALUES ($1, $2) RETURNING *",
+      [username, username],
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.rows[0]);
+        }
+      }
+    );
+  });
+}
+
 module.exports = {
   selectTopics,
   selectDescriptions,
   selectArticle,
   selectAllArticles,
   selectComments,
+  newComment,
 };

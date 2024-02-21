@@ -45,6 +45,14 @@ describe("GET /api/", () => {
         });
       });
   });
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/apiarticle")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
 });
 
 describe("GET /api/articles/:article_id", () => {
@@ -54,7 +62,6 @@ describe("GET /api/articles/:article_id", () => {
       .expect(200)
       .then((res) => {
         const article = res.body.article;
-        console.log(article);
         expect(article).toHaveProperty("article_id");
         expect(article).toHaveProperty("title");
         expect(article).toHaveProperty("topic");
@@ -82,7 +89,6 @@ describe("GET /api/articles", () => {
       .expect(200)
       .then((res) => {
         expect(Array.isArray(res.body.article)).toBe(true);
-        console.log(res.body.article);
         res.body.article.forEach((article) => {
           expect(article).toHaveProperty("article_id");
           expect(article).toHaveProperty("title");
@@ -94,6 +100,14 @@ describe("GET /api/articles", () => {
         });
       });
   });
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/articles2")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
 });
 
 describe("GET /api/articles/:article_id/comments", () => {
@@ -103,9 +117,7 @@ describe("GET /api/articles/:article_id/comments", () => {
       .expect(200)
       .then((res) => {
         const comments = res.body.article;
-        console.log(typeof comments);
         comments.forEach((comment) => {
-          console.log(comment);
           expect(comment).toHaveProperty("comment_id");
           expect(comment).toHaveProperty("votes");
           expect(comment).toHaveProperty("created_at");
@@ -122,6 +134,64 @@ describe("GET /api/articles/:article_id/comments", () => {
       .expect(404)
       .then((res) => {
         expect(res.body.msg).toBe("article does not exist");
+      });
+  });
+});
+
+describe("POST /api/articles/:article_id/comments", () => {
+  test("POST:201 posts comment on specific article for user that doesn't exist", () => {
+    return request(app)
+      .post("/api/articles/2/comments")
+      .send({
+        username: "Adam",
+        body: "new comment",
+      })
+      .expect(201)
+      .then((res) => {
+        const comments = res.body.article;
+        expect(comments.length).toBe(1);
+        comments.forEach((comment) => {
+          expect(comment).toHaveProperty("comment_id");
+          expect(comment).toHaveProperty("votes");
+          expect(comment).toHaveProperty("created_at");
+          expect(comment).toHaveProperty("author", "Adam");
+          expect(comment).toHaveProperty("body", "new comment");
+          expect(comment).toHaveProperty("article_id", 2);
+        });
+      });
+  });
+  test("POST:201 posts comment on specific article for user that exists", () => {
+    return request(app)
+      .post("/api/articles/1/comments")
+      .send({
+        username: "lurker",
+        body: "new comment",
+      })
+      .expect(201)
+      .then((res) => {
+        let comments = res.body.article;
+        expect(comments.length).toBe(12);
+        comments = comments.filter((comment) => comment.author === "lurker");
+
+        comments.forEach((comment) => {
+          expect(comment).toHaveProperty("comment_id");
+          expect(comment).toHaveProperty("votes");
+          expect(comment).toHaveProperty("created_at");
+          expect(comment).toHaveProperty("author", "lurker");
+          expect(comment).toHaveProperty("body", "new comment");
+          expect(comment).toHaveProperty("article_id", 1);
+        });
+      });
+  });
+  test("POST:400 sends appropriate error message when send bad request", () => {
+    return request(app)
+      .post("/api/articles/1/comments")
+      .send({
+        body: "new comment",
+      })
+      .expect(400)
+      .then((res) => {
+        expect(res.body.msg).toBe("bad request");
       });
   });
 });
