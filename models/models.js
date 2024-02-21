@@ -165,7 +165,6 @@ function updateVotes(articleId, votes) {
             reject({ status: 404, msg: "path not found" });
           } else {
             const updatedArticle = result.rows[0];
-            console.log(updatedArticle);
             resolve(updatedArticle);
           }
         }
