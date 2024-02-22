@@ -361,6 +361,7 @@ describe("GET /api/articles/:article_id/comment_count", () => {
       .expect(200)
       .then((res) => {
         const count = res.body.count;
+        console.log(count);
         expect(count).toBe(11);
       });
   });
