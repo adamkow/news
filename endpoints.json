@@ -148,11 +148,12 @@
       ]
     }
   },
-  "GET /api/articles/id:/comment_count": {
-    "description": "responds with count of all comments for specific article",
+
+  "GET /api/articles/:id/comment_count": {
+    "description": "Returns count of how many comments in specific article",
     "queries": ["comment_count"],
     "exampleResponse": {
-      "comment_count": 10
+      "count": 11
     }
   }
 }
