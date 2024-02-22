@@ -113,7 +113,7 @@ describe("GET /api/articles", () => {
 describe("GET /api/articles/:article_id/comments", () => {
   test("GET:200 gets comments of a specific article", () => {
     return request(app)
-      .get("/api/articles/1/comments")
+      .get("/api/articles/9/comments")
       .expect(200)
       .then((res) => {
         const comments = res.body.article;
@@ -146,18 +146,9 @@ describe("POST /api/articles/:article_id/comments", () => {
         username: "Adam",
         body: "new comment",
       })
-      .expect(201)
+      .expect(404)
       .then((res) => {
-        const comments = res.body.article;
-        expect(comments.length).toBe(1);
-        comments.forEach((comment) => {
-          expect(comment).toHaveProperty("comment_id");
-          expect(comment).toHaveProperty("votes");
-          expect(comment).toHaveProperty("created_at");
-          expect(comment).toHaveProperty("author", "Adam");
-          expect(comment).toHaveProperty("body", "new comment");
-          expect(comment).toHaveProperty("article_id", 2);
-        });
+        expect(res.body.msg).toBe("user does not exist");
       });
   });
   test("POST:201 posts comment on specific article for user that exists", () => {
@@ -194,6 +185,31 @@ describe("POST /api/articles/:article_id/comments", () => {
         expect(res.body.msg).toBe("bad request");
       });
   });
+  test("POST:404 posts comment on non-existing article", () => {
+    return request(app)
+      .post("/api/articles/9999/comments")
+      .send({
+        username: "lurker",
+        body: "new comment",
+      })
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("article does not exist");
+      });
+  });
+
+  test("POST:400 responds with bad request when given invalid article_id format", () => {
+    return request(app)
+      .post("/api/articles/not-a-valid-id/comments")
+      .send({
+        username: "lurker",
+        body: "new comment",
+      })
+      .expect(400)
+      .then((res) => {
+        expect(res.body.msg).toBe("bad request");
+      });
+  });
 });
 
 describe("PATCH /api/articles/:article_id/", () => {
@@ -223,22 +239,160 @@ describe("PATCH /api/articles/:article_id/", () => {
         expect(article).toHaveProperty("votes", -100);
       });
   });
-  test("PATCH:404 responds with article not found for invalid article ID", () => {
+  test("PATCH:404 responds with 'path not found' for invalid article ID", () => {
+    const invalidId = "999999";
     return request(app)
-      .patch("/api/articles/999999")
+      .patch(`/api/articles/${invalidId}`)
       .send({ inc_votes: 1 })
       .expect(404)
       .then((res) => {
         expect(res.body.msg).toBe("path not found");
       });
   });
-  test("PATCH:400 responds with bad request for invalid request body", () => {
+
+  test("PATCH:404 responds with 'path not found' for non-existing article ID", () => {
+    const nonExistingId = "123456";
+    return request(app)
+      .patch(`/api/articles/${nonExistingId}`)
+      .send({ inc_votes: 1 })
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
+
+  test("PATCH:400 for empty request body", () => {
     return request(app)
       .patch("/api/articles/2")
       .send({})
       .expect(400)
       .then((res) => {
         expect(res.body.msg).toBe("bad request");
+      });
+  });
+
+  test("PATCH:400 for invalid article ID format", () => {
+    return request(app)
+      .patch("/api/articles/not-a-number")
+      .send({ inc_votes: 1 })
+      .expect(400)
+      .then((res) => {
+        expect(res.body.msg).toBe("bad request");
+      });
+  });
+});
+
+describe("DELETE /api/comments/:comment_id", () => {
+  test("DELETE:204 deletes specific comment", () => {
+    return request(app)
+      .delete("/api/comments/10")
+      .expect(204)
+      .then((res) => {
+        const comment = [res.body];
+        expect(Object.keys(comment[0]).length).toBe(0);
+      });
+  });
+  test("DELETE:404 responds with error message when comment doesn't exist", () => {
+    return request(app)
+      .delete("/api/comments/1000")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("comment does not exist");
+      });
+  });
+  test("DELETE:400 responds with error message when given an invalid id", async () => {
+    const response = await request(app).delete("/api/comments/apple");
+    expect(response.status).toBe(400);
+    expect(response.body.msg).toBe("bad request");
+  });
+  test("DELETE:400 responds with error message when given an invalid comment ID format", () => {
+    return request(app)
+      .delete("/api/comments/not-an-id")
+      .expect(400)
+      .then((res) => {
+        expect(res.body.msg).toBe("bad request");
+      });
+  });
+
+  test("DELETE:404 responds with error message when comment ID does not exist", () => {
+    return request(app)
+      .delete("/api/comments/9999")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("comment does not exist");
+      });
+  });
+});
+
+describe("GET /api/users", () => {
+  test("GET:200 responds with all users", () => {
+    return request(app)
+      .get("/api/users")
+      .expect(200)
+      .then((res) => {
+        const users = res.body.users;
+        users.forEach((user) => {
+          expect(user).toHaveProperty("username");
+          expect(user).toHaveProperty("name");
+          expect(user).toHaveProperty("avatar_url");
+        });
+      });
+  });
+
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/fridge")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
+});
+
+describe("GET /api/articles (topic query)", () => {
+  test("GET:200 responds with articles with specific topic", () => {
+    return request(app)
+      .get("/api/articles/topic/mitch")
+      .expect(200)
+      .then((res) => {
+        const articles = res.body.articles;
+        console.log(articles);
+        expect(articles.length).toBe(12);
+      });
+  });
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/articles/topic/fridge")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
+
+  test("GET:400 respond with bad request for invalid topic input", () => {
+    return request(app)
+      .get("/api/articles/topic/99999")
+      .expect(400)
+      .then((res) => {
+        expect(res.body.msg).toBe("bad request");
+      });
+  });
+  test("GET:200 not topic query gets all articles", () => {
+    return request(app)
+      .get("/api/articles/")
+      .expect(200)
+      .then((res) => {
+        articles = res.body.article;
+        expect(articles.length).toBe(13);
+        articles.forEach((article) => {
+          expect(article).toHaveProperty("article_id");
+          expect(article).toHaveProperty("title");
+          expect(article).toHaveProperty("topic");
+          expect(article).toHaveProperty("author");
+          expect(article).toHaveProperty("created_at");
+          expect(article).toHaveProperty("votes");
+          expect(article).toHaveProperty("article_img_url");
+        });
       });
   });
 });
