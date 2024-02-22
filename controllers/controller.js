@@ -9,6 +9,7 @@ const {
   deleteCommentById,
   selectUsers,
   selectArticleTopics,
+  commentCount,
 } = require("../models/models");
 
 function getTopics(req, res, next) {
@@ -128,6 +129,17 @@ function getArticleTopics(req, res, next) {
     .catch(next);
 }
 
+function getCommentCount(req, res, next) {
+  const id = req.params.id;
+  commentCount(id)
+    .then((count) => {
+      res.status(200).send({ count });
+    })
+    .catch((err) => {
+      next(err);
+    });
+}
+
 module.exports = {
   getTopics,
   getApi,
@@ -139,4 +151,5 @@ module.exports = {
   deleteComment,
   getUsers,
   getArticleTopics,
+  getCommentCount,
 };

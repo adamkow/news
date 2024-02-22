@@ -353,3 +353,32 @@ describe("GET /api/articles (topic query)", () => {
       });
   });
 });
+
+describe("GET /api/articles/:article_id/comment_count", () => {
+  test("GET:200 responds with count of all comments for specific article", () => {
+    return request(app)
+      .get("/api/articles/1/comment_count")
+      .expect(200)
+      .then((res) => {
+        const count = res.body.count;
+        console.log(count);
+        expect(count).toBe(11);
+      });
+  });
+  test("GET:204 reponds with error message for article with no comments", () => {
+    return request(app)
+      .get("/api/articles/10/comment_count")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("no comments for article");
+      });
+  });
+  test("GET:404 respond with not found for an article that doesn't exist", () => {
+    return request(app)
+      .get("/api/articles/99999/comment_count")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("article does not exist");
+      });
+  });
+});

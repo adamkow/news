@@ -197,6 +197,37 @@ function selectArticleTopics(topics) {
       });
   });
 }
+function commentCount(id) {
+  console.log("in models");
+  return new Promise((resolve, reject) => {
+    db.query(`SELECT * FROM articles WHERE article_id = $1;`, [id])
+      .then((result) => {
+        if (result.rows.length === 0) {
+          return Promise.reject({ status: 404, msg: "article does not exist" });
+        } else {
+          console.log(id);
+          db.query(`SELECT * FROM comments WHERE article_id = $1;`, [id])
+            .then((result) => {
+              if (result.rows.length === 0) {
+                return Promise.reject({
+                  status: 404,
+                  msg: "no comments for article",
+                });
+              }
+              const count = result.rows.length;
+              console.log(result.rows);
+              resolve(count);
+            })
+            .catch((error) => {
+              reject(error);
+            });
+        }
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
 
 module.exports = {
   selectTopics,
@@ -209,4 +240,5 @@ module.exports = {
   deleteCommentById,
   selectUsers,
   selectArticleTopics,
+  commentCount,
 };
