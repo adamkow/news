@@ -183,6 +183,21 @@ function selectUsers() {
   });
 }
 
+function selectArticleTopics(topics) {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT * FROM articles WHERE topic = $1;", [topics])
+      .then((result) => {
+        if (result.rows.length === 0) {
+          return Promise.reject({ status: 404, msg: "path not found" });
+        }
+        resolve(result.rows);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
 module.exports = {
   selectTopics,
   selectDescriptions,
@@ -193,4 +208,5 @@ module.exports = {
   updateVotes,
   deleteCommentById,
   selectUsers,
+  selectArticleTopics,
 };

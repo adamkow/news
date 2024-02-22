@@ -315,3 +315,41 @@ describe("GET /api/users", () => {
       });
   });
 });
+
+describe("GET /api/articles (topic query)", () => {
+  test("GET:200 responds with articles with specific topic", () => {
+    return request(app)
+      .get("/api/articles/topic/mitch")
+      .expect(200)
+      .then((res) => {
+        const articles = res.body.articles;
+        expect(articles.length).toBe(12);
+      });
+  });
+  test("GET:404 respond with not found for invalid path", () => {
+    return request(app)
+      .get("/api/articles/topic/fridge")
+      .expect(404)
+      .then((res) => {
+        expect(res.body.msg).toBe("path not found");
+      });
+  });
+  test("GET:200 no topic query gets all articles", () => {
+    return request(app)
+      .get("/api/articles/")
+      .expect(200)
+      .then((res) => {
+        articles = res.body.article;
+        expect(articles.length).toBe(13);
+        articles.forEach((article) => {
+          expect(article).toHaveProperty("article_id");
+          expect(article).toHaveProperty("title");
+          expect(article).toHaveProperty("topic");
+          expect(article).toHaveProperty("author");
+          expect(article).toHaveProperty("created_at");
+          expect(article).toHaveProperty("votes");
+          expect(article).toHaveProperty("article_img_url");
+        });
+      });
+  });
+});
