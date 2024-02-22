@@ -8,6 +8,7 @@ const {
   updateVotes,
   deleteCommentById,
   selectUsers,
+  selectArticleTopics,
 } = require("../models/models");
 
 function getTopics(req, res, next) {
@@ -111,6 +112,22 @@ function getUsers(req, res, next) {
     });
 }
 
+function getArticleTopics(req, res, next) {
+  const topic = req.params.topic;
+  const regex = /^[a-zA-Z]+$/;
+  if (!topic) {
+    return res.status(404).send({ msg: "path not found" });
+  }
+  if (typeof topic !== "string" || !regex.test(topic)) {
+    return res.status(400).send({ msg: "bad request" });
+  }
+  selectArticleTopics(topic)
+    .then((articles) => {
+      res.status(200).send({ articles });
+    })
+    .catch(next);
+}
+
 module.exports = {
   getTopics,
   getApi,
@@ -121,4 +138,5 @@ module.exports = {
   patchArticle,
   deleteComment,
   getUsers,
+  getArticleTopics,
 };
