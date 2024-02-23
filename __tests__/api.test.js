@@ -3,6 +3,8 @@ const db = require("../db/connection");
 const app = require("../app");
 const seed = require("../db/seeds/seed");
 const data = require("../db/data/test-data");
+const endpoints = require("../endpoints.json");
+require("jest-sorted");
 
 beforeEach(() => {
   return seed(data);
@@ -40,10 +42,7 @@ describe("GET /api/", () => {
       .get("/api/")
       .expect(200)
       .then((res) => {
-        const descriptionsObj = res.body.descriptions;
-        Object.keys(descriptionsObj).forEach((key) => {
-          expect(descriptionsObj[key]).toHaveProperty("description");
-        });
+        expect(res.body.descriptions).toEqual(endpoints);
       });
   });
   test("GET:404 respond with not found for invalid path", () => {
@@ -63,6 +62,7 @@ describe("GET /api/articles/:article_id", () => {
       .expect(200)
       .then((res) => {
         const article = res.body.article;
+        expect(article.article_id).toBe(2);
         expect(article).toHaveProperty("article_id");
         expect(article).toHaveProperty("title");
         expect(article).toHaveProperty("topic");
@@ -99,6 +99,17 @@ describe("GET /api/articles", () => {
           expect(article).toHaveProperty("created_at");
           expect(article).toHaveProperty("votes");
           expect(article).toHaveProperty("article_img_url");
+        });
+      });
+  });
+  test("Should be sorted by date descending", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then((res) => {
+        const articles = res.body.article;
+        expect(articles).toBeSortedBy("created_at", {
+          descending: true,
         });
       });
   });
@@ -367,6 +378,7 @@ describe("GET /api/articles/:article_id/comment_count", () => {
         .expect(200)
         .then((res) => {
           const article = res.body.article;
+          expect(article.article_id).toBe(1);
           expect(article.comment_count).toBe(11);
           expect(article).toHaveProperty("author");
           expect(article).toHaveProperty("title");
@@ -385,6 +397,7 @@ describe("GET /api/articles/:article_id/comment_count", () => {
       .expect(200)
       .then((res) => {
         const article = res.body.article;
+        expect(article.article_id).toBe(2);
         expect(article.comment_count).toBe(0);
         expect(article).toHaveProperty("author");
         expect(article).toHaveProperty("title");

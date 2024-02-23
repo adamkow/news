@@ -25,33 +25,30 @@ function selectDescriptions() {
 
 function selectArticle(id) {
   return new Promise((resolve, reject) => {
-    db.query(`SELECT * FROM articles WHERE article_id = $1;`, [id])
+    db.query(
+      `
+      SELECT articles.*,
+      COUNT(comments.comment_id)::integer AS comment_count
+      FROM articles
+      LEFT JOIN comments ON articles.article_id = comments.article_id
+      WHERE articles.article_id = $1
+      GROUP BY articles.article_id;
+    `,
+      [id]
+    )
       .then((result) => {
         if (result.rows.length === 0) {
-          throw {
+          reject({
             status: 404,
             msg: "article does not exist",
-          };
+          });
+          return;
         }
-        return db.query(
-          `ALTER TABLE articles ADD COLUMN IF NOT EXISTS comment_count INT DEFAULT 0;`
-        );
+        resolve(result.rows[0]);
       })
-      .then(() =>
-        db.query(`SELECT * FROM comments WHERE article_id = $1;`, [id])
-      )
-      .then((res) => {
-        const commentCount = res.rows.length;
-        return db.query(
-          `UPDATE articles SET comment_count = $1 WHERE article_id = $2`,
-          [commentCount, id]
-        );
-      })
-      .then(() =>
-        db.query(`SELECT * FROM articles WHERE article_id = $1;`, [id])
-      )
-      .then((res) => resolve(res.rows[0]))
-      .catch((error) => reject(error));
+      .catch((error) => {
+        reject(error);
+      });
   });
 }
 
