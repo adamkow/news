@@ -44,8 +44,10 @@ function getArticles(req, res, next) {
       next(err);
     });
 }
+
 function getAllArticles(req, res, next) {
-  selectAllArticles()
+  const topic = req.query.topic;
+  selectAllArticles(topic)
     .then((article) => {
       res.status(200).send({ article });
     })

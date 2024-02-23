@@ -16,6 +16,7 @@ describe("GET /api/topics", () => {
       .expect(200)
       .then((res) => {
         const topics = res.body.topics;
+        expect(topics.length).toBe(3);
         topics.forEach((topic) => {
           expect(topic).toHaveProperty("slug");
           expect(topic).toHaveProperty("description");
@@ -89,6 +90,7 @@ describe("GET /api/articles", () => {
       .expect(200)
       .then((res) => {
         expect(Array.isArray(res.body.article)).toBe(true);
+        expect(res.body.article.length).toBe(13);
         res.body.article.forEach((article) => {
           expect(article).toHaveProperty("article_id");
           expect(article).toHaveProperty("title");
@@ -117,6 +119,7 @@ describe("GET /api/articles/:article_id/comments", () => {
       .expect(200)
       .then((res) => {
         const comments = res.body.article;
+        expect(comments.length).toBe(2);
         comments.forEach((comment) => {
           expect(comment).toHaveProperty("comment_id");
           expect(comment).toHaveProperty("votes");
@@ -298,6 +301,7 @@ describe("GET /api/users", () => {
       .expect(200)
       .then((res) => {
         const users = res.body.users;
+        expect(users.length).toBe(4);
         users.forEach((user) => {
           expect(user).toHaveProperty("username");
           expect(user).toHaveProperty("name");
@@ -319,10 +323,10 @@ describe("GET /api/users", () => {
 describe("GET /api/articles (topic query)", () => {
   test("GET:200 responds with articles with specific topic", () => {
     return request(app)
-      .get("/api/articles/topic/mitch")
+      .get("/api/articles?topic=mitch")
       .expect(200)
       .then((res) => {
-        const articles = res.body.articles;
+        const articles = res.body.article;
         expect(articles.length).toBe(12);
       });
   });
@@ -356,24 +360,44 @@ describe("GET /api/articles (topic query)", () => {
 
 describe("GET /api/articles/:article_id/comment_count", () => {
   test("GET:200 responds with count of all comments for specific article", () => {
+    return (
+      request(app)
+        //.get("/api/articles?topic=mitch")
+        .get("/api/articles/1")
+        .expect(200)
+        .then((res) => {
+          const article = res.body.article;
+          expect(article.comment_count).toBe(11);
+          expect(article).toHaveProperty("author");
+          expect(article).toHaveProperty("title");
+          expect(article).toHaveProperty("article_id");
+          expect(article).toHaveProperty("body");
+          expect(article).toHaveProperty("topic");
+          expect(article).toHaveProperty("created_at");
+          expect(article).toHaveProperty("votes");
+          expect(article).toHaveProperty("article_img_url");
+        })
+    );
+  });
+  test("GET:200 responds with comment count of 0 for an article without comments", () => {
     return request(app)
-      .get("/api/articles/1/comment_count")
+      .get("/api/articles/2")
       .expect(200)
       .then((res) => {
-        const count = res.body.count;
-        console.log(count);
-        expect(count).toBe(11);
+        const article = res.body.article;
+        expect(article.comment_count).toBe(0);
+        expect(article).toHaveProperty("author");
+        expect(article).toHaveProperty("title");
+        expect(article).toHaveProperty("article_id");
+        expect(article).toHaveProperty("body");
+        expect(article).toHaveProperty("topic");
+        expect(article).toHaveProperty("created_at");
+        expect(article).toHaveProperty("votes");
+        expect(article).toHaveProperty("article_img_url");
       });
   });
-  test("GET:204 reponds with error message for article with no comments", () => {
-    return request(app)
-      .get("/api/articles/10/comment_count")
-      .expect(404)
-      .then((res) => {
-        expect(res.body.msg).toBe("no comments for article");
-      });
-  });
-  test("GET:404 respond with not found for an article that doesn't exist", () => {
+
+  test("GET:404 respond with error message for an article that doesn't exist", () => {
     return request(app)
       .get("/api/articles/99999/comment_count")
       .expect(404)

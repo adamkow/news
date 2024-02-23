@@ -28,30 +28,73 @@ function selectArticle(id) {
     db.query(`SELECT * FROM articles WHERE article_id = $1;`, [id])
       .then((result) => {
         if (result.rows.length === 0) {
-          return Promise.reject({ status: 404, msg: "article does not exist" });
+          throw {
+            status: 404,
+            msg: "article does not exist",
+          };
         }
-        resolve(result.rows[0]);
+        return db.query(
+          `ALTER TABLE articles ADD COLUMN IF NOT EXISTS comment_count INT DEFAULT 0;`
+        );
       })
-      .catch((error) => {
-        reject(error);
-      });
+      .then(() =>
+        db.query(`SELECT * FROM comments WHERE article_id = $1;`, [id])
+      )
+      .then((res) => {
+        const commentCount = res.rows.length;
+        return db.query(
+          `UPDATE articles SET comment_count = $1 WHERE article_id = $2`,
+          [commentCount, id]
+        );
+      })
+      .then(() =>
+        db.query(`SELECT * FROM articles WHERE article_id = $1;`, [id])
+      )
+      .then((res) => resolve(res.rows[0]))
+      .catch((error) => reject(error));
   });
 }
 
-function selectAllArticles() {
+function selectAllArticles(topic) {
   return new Promise((resolve, reject) => {
-    db.query(`SELECT * FROM articles ORDER BY created_at DESC;`)
-      .then((result) => {
-        const articlesWithoutBody = result.rows.map((article) => {
-          const { body, ...rest } = article;
-          return rest;
+    if (topic) {
+      db.query("SELECT * FROM articles WHERE topic = $1;", [topic])
+        .then((result) => {
+          if (result.rows.length === 0) {
+            return reject({ status: 404, msg: "path not found" });
+          }
+          resolve(result.rows);
+        })
+        .catch((error) => {
+          reject(error);
         });
-        resolve(articlesWithoutBody);
-      })
-      .catch((error) => {
-        reject(error);
-      });
+    } else {
+      db.query("SELECT * FROM articles ORDER BY created_at DESC;")
+        .then((result) => {
+          const articlesWithoutBody = result.rows.map(
+            ({ body, ...rest }) => rest
+          );
+          resolve(articlesWithoutBody);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    }
   });
+}
+
+function selectArticleTopics(topics) {
+  return db
+    .query("SELECT * FROM articles WHERE topic = $1;", [topics])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        throw { status: 404, msg: "path not found" };
+      }
+      return result.rows;
+    })
+    .catch((error) => {
+      reject(error);
+    });
 }
 
 function selectComments(articleId) {
@@ -183,29 +226,13 @@ function selectUsers() {
   });
 }
 
-function selectArticleTopics(topics) {
-  return new Promise((resolve, reject) => {
-    db.query("SELECT * FROM articles WHERE topic = $1;", [topics])
-      .then((result) => {
-        if (result.rows.length === 0) {
-          return Promise.reject({ status: 404, msg: "path not found" });
-        }
-        resolve(result.rows);
-      })
-      .catch((error) => {
-        reject(error);
-      });
-  });
-}
 function commentCount(id) {
-  console.log("in models");
   return new Promise((resolve, reject) => {
     db.query(`SELECT * FROM articles WHERE article_id = $1;`, [id])
       .then((result) => {
         if (result.rows.length === 0) {
           return Promise.reject({ status: 404, msg: "article does not exist" });
         } else {
-          console.log(id);
           db.query(`SELECT * FROM comments WHERE article_id = $1;`, [id])
             .then((result) => {
               if (result.rows.length === 0) {
@@ -215,7 +242,6 @@ function commentCount(id) {
                 });
               }
               const count = result.rows.length;
-              console.log(result.rows);
               resolve(count);
             })
             .catch((error) => {
