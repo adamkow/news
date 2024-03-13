@@ -54,29 +54,41 @@ function selectArticle(id) {
 
 function selectAllArticles(topic) {
   return new Promise((resolve, reject) => {
+    let query;
+    let queryParams = [];
+
     if (topic) {
-      db.query("SELECT * FROM articles WHERE topic = $1;", [topic])
-        .then((result) => {
-          if (result.rows.length === 0) {
-            return reject({ status: 404, msg: "path not found" });
-          }
-          resolve(result.rows);
-        })
-        .catch((error) => {
-          reject(error);
-        });
+      query = `
+        SELECT articles.*, COUNT(comments.comment_id)::integer AS comment_count
+        FROM articles
+        LEFT JOIN comments ON articles.article_id = comments.article_id
+        WHERE articles.topic = $1
+        GROUP BY articles.article_id
+        ORDER BY articles.created_at DESC;`;
+      queryParams = [topic];
     } else {
-      db.query("SELECT * FROM articles ORDER BY created_at DESC;")
-        .then((result) => {
-          const articlesWithoutBody = result.rows.map(
-            ({ body, ...rest }) => rest
-          );
-          resolve(articlesWithoutBody);
-        })
-        .catch((error) => {
-          reject(error);
-        });
+      query = `
+        SELECT articles.*, COUNT(comments.comment_id)::integer AS comment_count
+        FROM articles
+        LEFT JOIN comments ON articles.article_id = comments.article_id
+        GROUP BY articles.article_id
+        ORDER BY articles.created_at DESC;`;
     }
+
+    db.query(query, queryParams)
+      .then((result) => {
+        if (result.rows.length === 0) {
+          return reject({ status: 404, msg: "path not found" });
+        }
+
+        const articles = topic
+          ? result.rows
+          : result.rows.map(({ body, ...rest }) => rest);
+        resolve(articles);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 }
 

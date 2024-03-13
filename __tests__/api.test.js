@@ -356,7 +356,9 @@ describe("GET /api/articles (topic query)", () => {
       .then((res) => {
         articles = res.body.article;
         expect(articles.length).toBe(13);
+        console.log(articles);
         articles.forEach((article) => {
+          expect(article).toHaveProperty("comment_count");
           expect(article).toHaveProperty("article_id");
           expect(article).toHaveProperty("title");
           expect(article).toHaveProperty("topic");
@@ -371,25 +373,22 @@ describe("GET /api/articles (topic query)", () => {
 
 describe("GET /api/articles/:article_id/comment_count", () => {
   test("GET:200 responds with count of all comments for specific article", () => {
-    return (
-      request(app)
-        //.get("/api/articles?topic=mitch")
-        .get("/api/articles/1")
-        .expect(200)
-        .then((res) => {
-          const article = res.body.article;
-          expect(article.article_id).toBe(1);
-          expect(article.comment_count).toBe(11);
-          expect(article).toHaveProperty("author");
-          expect(article).toHaveProperty("title");
-          expect(article).toHaveProperty("article_id");
-          expect(article).toHaveProperty("body");
-          expect(article).toHaveProperty("topic");
-          expect(article).toHaveProperty("created_at");
-          expect(article).toHaveProperty("votes");
-          expect(article).toHaveProperty("article_img_url");
-        })
-    );
+    return request(app)
+      .get("/api/articles/1")
+      .expect(200)
+      .then((res) => {
+        const article = res.body.article;
+        expect(article.article_id).toBe(1);
+        expect(article.comment_count).toBe(11);
+        expect(article).toHaveProperty("author");
+        expect(article).toHaveProperty("title");
+        expect(article).toHaveProperty("article_id");
+        expect(article).toHaveProperty("body");
+        expect(article).toHaveProperty("topic");
+        expect(article).toHaveProperty("created_at");
+        expect(article).toHaveProperty("votes");
+        expect(article).toHaveProperty("article_img_url");
+      });
   });
   test("GET:200 responds with comment count of 0 for an article without comments", () => {
     return request(app)
