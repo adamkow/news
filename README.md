@@ -1,6 +1,10 @@
 # Northcoders News API
 
-This project is an API for Northcoders News. You can access the API at [https://news-945o.onrender.com/api](https://news-945o.onrender.com/api).
+This project is an API for Northcoders News. 
+
+You can access the API at [https://news-945o.onrender.com/api](https://news-945o.onrender.com/api).
+
+Visit the frontend repo here [https://github.com/adamkow/nc-news](https://github.com/adamkow/nc-news)
 
 ## Environment Setup
 
